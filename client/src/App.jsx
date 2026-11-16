@@ -29,6 +29,7 @@ export default function App() {
       <main className="flex-1 max-w-[1200px] w-full mx-auto px-4 py-6">
         <Routes>
           <Route path="/" element={<MarketPage />} />
+          <Route path="/explore" element={<MarketPage />} />
           <Route path="/stock/:symbol" element={<StockDetailPage />} />
           <Route
             path="/portfolio"

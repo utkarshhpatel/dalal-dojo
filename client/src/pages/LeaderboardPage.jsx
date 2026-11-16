@@ -3,6 +3,7 @@ import { Trophy, TrendingUp, TrendingDown, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useMarket } from '../context/MarketContext';
 import { formatINR, formatPercent } from '../utils/formatters';
+import { apiFetch } from '../utils/api';
 
 export default function LeaderboardPage() {
   const { user } = useAuth();
@@ -12,7 +13,7 @@ export default function LeaderboardPage() {
 
   const fetchLeaderboard = async () => {
     try {
-      const res = await fetch('/api/leaderboard');
+      const res = await apiFetch('/leaderboard');
       if (res.ok) {
         const data = await res.json();
         setLeaderboard(data.leaderboard);

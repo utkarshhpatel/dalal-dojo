@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
 import { useTheme } from '../context/ThemeContext';
 import { formatINR } from '../utils/formatters';
+import { apiFetch } from '../utils/api';
 
 export default function StockChart({ symbol, currentPrice }) {
   const { isDark } = useTheme();
@@ -24,7 +25,7 @@ export default function StockChart({ symbol, currentPrice }) {
     async function loadCandles() {
       try {
         const queryRange = activeRange === '1W' ? '1M' : activeRange === 'All' ? '1Y' : activeRange;
-        const res = await fetch(`/api/quotes/history/${symbol}?range=${queryRange}`);
+        const res = await apiFetch(`/api/quotes/history/${symbol}?range=${queryRange}`);
         if (!res.ok) throw new Error('Failed to load chart');
         const data = await res.json();
 

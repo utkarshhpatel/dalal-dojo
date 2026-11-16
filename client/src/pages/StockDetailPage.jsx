@@ -8,6 +8,7 @@ import PriceText from '../components/PriceText';
 import StockChart from '../components/StockChart';
 import OrderCard from '../components/OrderCard';
 import { formatINR, formatPercent, formatNumber, formatTime } from '../utils/formatters';
+import { apiFetch } from '../utils/api';
 
 export default function StockDetailPage() {
   const { symbol } = useParams();
@@ -32,7 +33,7 @@ export default function StockDetailPage() {
   const fetchHolding = async () => {
     if (!user || !symbol) return;
     try {
-      const res = await fetch('/api/portfolio');
+      const res = await apiFetch('/portfolio');
       if (res.ok) {
         const data = await res.json();
         const holding = data.holdings.find(h => h.symbol.toUpperCase() === symbol.toUpperCase());

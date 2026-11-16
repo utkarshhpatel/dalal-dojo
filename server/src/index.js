@@ -1,7 +1,9 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
 import { initDatabase } from './db/database.js';
 import { startPriceEngine } from './services/priceEngine.js';
 
@@ -13,17 +15,37 @@ import watchlistRoutes from './routes/watchlistRoutes.js';
 import leaderboardRoutes from './routes/leaderboardRoutes.js';
 import accountRoutes from './routes/accountRoutes.js';
 
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Trust reverse proxy (e.g. Render, Heroku) for secure cookies & client IP
+app.set('trust proxy', 1);
 
 // Initialize Database
 initDatabase();
 
-// Middleware
+// CORS Configuration
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  ...(process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',').map(s => s.trim()) : [])
+];
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  origin: (origin, callback) => {
+    // Allow non-browser requests (tools, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    try {
+      const hostname = new URL(origin).hostname;
+      if (hostname.endsWith('.vercel.app') || hostname === 'localhost') {
+        return callback(null, true);
+      }
+    } catch (e) {
+      // Invalid URL
+    }
+    return callback(null, false);
+  },
   credentials: true
 }));
 app.use(express.json());

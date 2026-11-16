@@ -5,6 +5,7 @@ import { useMarket } from '../context/MarketContext';
 import { useToast } from '../context/ToastContext';
 import CompanyAvatar from '../components/CompanyAvatar';
 import { formatINR, formatPercent, formatDateOnly, formatTime } from '../utils/formatters';
+import { apiFetch } from '../utils/api';
 
 export default function OrdersPage() {
   const { user } = useAuth();
@@ -18,7 +19,7 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch('/api/orders');
+      const res = await apiFetch('/orders');
       if (res.ok) {
         const data = await res.json();
         setOrders(data.orders);
@@ -37,7 +38,7 @@ export default function OrdersPage() {
   const handleCancelOrder = async (orderId, symbol) => {
     setCancellingId(orderId);
     try {
-      const res = await fetch(`/api/orders/${orderId}`, {
+      const res = await apiFetch(`/orders/${orderId}`, {
         method: 'DELETE'
       });
       if (!res.ok) {

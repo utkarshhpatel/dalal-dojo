@@ -7,6 +7,7 @@ import CompanyAvatar from '../components/CompanyAvatar';
 import PriceText from '../components/PriceText';
 import AllocationDonut from '../components/AllocationDonut';
 import { formatINR, formatPercent } from '../utils/formatters';
+import { apiFetch } from '../utils/api';
 
 export default function PortfolioPage() {
   const { user } = useAuth();
@@ -19,7 +20,7 @@ export default function PortfolioPage() {
 
   const fetchPortfolio = async () => {
     try {
-      const res = await fetch('/api/portfolio');
+      const res = await apiFetch('/portfolio');
       if (res.ok) {
         const data = await res.json();
         setPortfolio(data);

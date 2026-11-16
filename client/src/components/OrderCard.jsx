@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useMarket } from '../context/MarketContext';
 import { useToast } from '../context/ToastContext';
 import { formatINR } from '../utils/formatters';
+import { apiFetch } from '../utils/api';
 
 export default function OrderCard({
   stock,
@@ -75,7 +76,7 @@ export default function OrderCard({
     setSubmitting(true);
 
     try {
-      const res = await fetch('/api/orders', {
+      const res = await apiFetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

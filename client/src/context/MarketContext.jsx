@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
+import { apiFetch } from '../utils/api';
 
 const MarketContext = createContext(null);
 
@@ -15,7 +16,7 @@ export function MarketProvider({ children }) {
   // Fetch Quotes
   const fetchQuotes = async () => {
     try {
-      const res = await fetch('/api/quotes');
+      const res = await apiFetch('/api/quotes');
       if (!res.ok) return;
       const data = await res.json();
 
@@ -56,7 +57,7 @@ export function MarketProvider({ children }) {
       return;
     }
     try {
-      const res = await fetch('/api/watchlist');
+      const res = await apiFetch('/api/watchlist');
       if (res.ok) {
         const data = await res.json();
         const set = new Set(data.watchlist.map(item => item.symbol));
@@ -82,9 +83,9 @@ export function MarketProvider({ children }) {
 
     try {
       if (isPresent) {
-        await fetch(`/api/watchlist/${encodeURIComponent(symbol)}`, { method: 'DELETE' });
+        await apiFetch(`/api/watchlist/${encodeURIComponent(symbol)}`, { method: 'DELETE' });
       } else {
-        await fetch('/api/watchlist', {
+        await apiFetch('/api/watchlist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ symbol })

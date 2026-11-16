@@ -5,14 +5,21 @@ import { signToken, authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
+function getCookieOptions() {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const sameSite = process.env.COOKIE_SAME_SITE || (isProduction ? 'none' : 'lax');
+  const secure = isProduction || sameSite === 'none';
+  return {
+    httpOnly: true,
+    secure,
+    sameSite,
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  };
+}
+
 // Helper to set cookie
 function setAuthCookie(res, token) {
-  res.cookie('token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-  });
+  res.cookie('token', token, getCookieOptions());
 }
 
 // POST /api/auth/signup
@@ -56,7 +63,8 @@ router.post('/signup', async (req, res) => {
 
     return res.status(201).json({
       message: 'Account created successfully! Welcome to Dalal Dojo.',
-      user
+      user,
+      token
     });
   } catch (err) {
     console.error('Signup error:', err);
@@ -94,7 +102,8 @@ router.post('/login', async (req, res) => {
         id: user.id,
         username: user.username,
         cash: user.cash
-      }
+      },
+      token
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -104,9 +113,14 @@ router.post('/login', async (req, res) => {
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const sameSite = process.env.COOKIE_SAME_SITE || (isProduction ? 'none' : 'lax');
+  const secure = isProduction || sameSite === 'none';
+
   res.clearCookie('token', {
     httpOnly: true,
-    sameSite: 'lax'
+    secure,
+    sameSite
   });
   return res.json({ message: 'Logged out successfully.' });
 });
