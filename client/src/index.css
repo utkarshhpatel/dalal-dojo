@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Groww-style Light Theme (Default) */
+  --bg-primary: #FFFFFF;
+  --bg-subtle: #F5F6F8;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F8F9FA;
+  --bg-input: #FFFFFF;
+  --border-subtle: #E8EAED;
+  --border-focus: #00B386;
+  
+  --text-main: #44475B;
+  --text-heading: #121212;
+  --text-muted: #7C7E8C;
+  --text-subtle: #9EA0AB;
+
+  --color-primary: #00B386;
+  --color-primary-hover: #009E76;
+  --color-primary-text: #FFFFFF;
+  --color-accent: #00B386;
+
+  --color-gain: #00B386;
+  --color-loss: #EB5B3C;
+  --color-gain-subtle: rgba(0, 179, 134, 0.08);
+  --color-loss-subtle: rgba(235, 91, 60, 0.08);
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.dark {
+  /* Binance-style Dark Theme */
+  --bg-primary: #0B0E11;
+  --bg-subtle: #12161C;
+  --bg-card: #181A20;
+  --bg-card-hover: #20242D;
+  --bg-input: #12161C;
+  --border-subtle: #2B3139;
+  --border-focus: #FCD535;
+
+  --text-main: #EAECEF;
+  --text-heading: #FFFFFF;
+  --text-muted: #848E9C;
+  --text-subtle: #5E6673;
+
+  --color-primary: #FCD535;
+  --color-primary-hover: #E8C42F;
+  --color-primary-text: #181A20;
+  --color-accent: #FCD535;
+
+  --color-gain: #0ECB81;
+  --color-loss: #F6465D;
+  --color-gain-subtle: rgba(14, 203, 129, 0.12);
+  --color-loss-subtle: rgba(246, 70, 93, 0.12);
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-main);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    transition: background-color 160ms ease-out, color 160ms ease-out;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--text-heading);
+    font-weight: 600;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Minimalist Clean Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Animations & Transitions */
+@media (prefers-reduced-motion: no-preference) {
+  .page-transition {
+    animation: fadeIn 150ms ease-out forwards;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
