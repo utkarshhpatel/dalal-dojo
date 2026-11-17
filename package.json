@@ -8,11 +8,24 @@
     "start": "node server/src/index.js",
     "seed": "npm --prefix server run seed",
     "install:all": "npm install && npm --prefix server install && npm --prefix client install",
-    "postinstall": "npm --prefix client install",
+    "postinstall": "npm --prefix client install && npm --prefix server install",
     "build": "npm --prefix client run build",
     "build:client": "npm --prefix client run build"
   },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.8.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "yahoo-finance2": "^2.13.3"
+  },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
