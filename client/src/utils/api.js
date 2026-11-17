@@ -3,10 +3,15 @@
  * Handles base URL configuration, credentials (cookies), and Bearer token fallback.
  */
 
+const defaultProdUrl =
+  typeof window !== 'undefined' && window.location && window.location.hostname.includes('vercel.app')
+    ? 'https://dalal-dojo.onrender.com'
+    : '';
+
 export const API_BASE_URL = (
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_API_BASE_URL ||
-  ''
+  defaultProdUrl
 ).replace(/\/$/, '');
 
 export function getToken() {
