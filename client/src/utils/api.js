@@ -71,11 +71,12 @@ export async function apiFetch(endpoint, options = {}) {
     );
   }
 
-  // Detect HTML responses from Vercel SPA fallbacks when VITE_API_URL is missing or wrong
+  // Validate that response is JSON for API endpoints (prevents cryptic "Unexpected token 'T'" errors on 404/HTML responses)
   const contentType = res.headers.get('content-type') || '';
-  if (contentType.includes('text/html') && cleanEndpoint.startsWith('/api/')) {
+  if (cleanEndpoint.startsWith('/api/') && res.status !== 204 && !contentType.includes('application/json')) {
+    const text = await res.text().catch(() => '');
     throw new Error(
-      `Market server unavailable at ${url}. If deployed on Vercel, please set VITE_API_URL in your Vercel Project Settings to your deployed backend URL.`
+      `Market server returned non-JSON response (${res.status} ${res.statusText || 'Error'}): ${text.slice(0, 100) || 'Backend unavailable'}`
     );
   }
 
