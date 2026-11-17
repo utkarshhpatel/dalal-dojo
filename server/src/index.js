@@ -28,17 +28,22 @@ initDatabase();
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'https://dalaldojo.vercel.app',
   ...(process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',').map(s => s.trim()) : [])
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
     // Allow non-browser requests (tools, curl, server-to-server)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     try {
       const hostname = new URL(origin).hostname;
-      if (hostname.endsWith('.vercel.app') || hostname === 'localhost') {
+      if (
+        hostname.endsWith('.vercel.app') ||
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1'
+      ) {
         return callback(null, true);
       }
     } catch (e) {
@@ -46,10 +51,29 @@ app.use(cors({
     }
     return callback(null, false);
   },
-  credentials: true
-}));
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
+
+// Health check endpoints (available at both /health and /api/health)
+const healthHandler = (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    service: 'Dalal Dojo Backend',
+    database: 'connected',
+    env: process.env.NODE_ENV || 'development'
+  });
+};
+
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -60,19 +84,20 @@ app.use('/api/watchlist', watchlistRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/account', accountRoutes);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+// Root route for pinging backend
+app.get('/', (req, res) => {
   res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    service: 'Dalal Dojo Backend'
+    name: 'Dalal Dojo API',
+    status: 'running',
+    health: '/health',
+    quotes: '/api/quotes'
   });
 });
 
 // Start Price Engine
 startPriceEngine();
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Dalal Dojo Server listening on port ${PORT}`);
+// Start Server (explicitly binding to 0.0.0.0 for cloud hosting)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Dalal Dojo Server listening on 0.0.0.0:${PORT}`);
 });

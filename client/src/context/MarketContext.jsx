@@ -11,17 +11,27 @@ export function MarketProvider({ children }) {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [watchlistSymbols, setWatchlistSymbols] = useState(new Set());
   const [priceFlashes, setPriceFlashes] = useState({}); // symbol -> 'up' | 'down'
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const prevPricesRef = useRef(new Map());
 
   // Fetch Quotes
   const fetchQuotes = async () => {
     try {
       const res = await apiFetch('/api/quotes');
-      if (!res.ok) return;
-      const data = await res.json();
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server responded with status ${res.status}`);
+      }
 
-      setIsSimulated(data.isSimulated);
+      const data = await res.json();
+      if (!data || !Array.isArray(data.quotes)) {
+        throw new Error('Invalid market data format received from backend.');
+      }
+
+      setIsSimulated(Boolean(data.isSimulated));
       setLastUpdated(data.timestamp);
+      setError(null);
 
       // Detect price flashes
       const newFlashes = {};
@@ -46,8 +56,23 @@ export function MarketProvider({ children }) {
 
       setQuotes(data.quotes);
     } catch (err) {
-      // Ignore network errors in polling
+      console.warn('Market quotes fetch warning:', err.message);
+      // Only set blocking error if we don't have any quotes yet
+      setQuotes(prev => {
+        if (prev.length === 0) {
+          setError(err.message || 'Unable to connect to market server.');
+        }
+        return prev;
+      });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const retryFetchQuotes = async () => {
+    setLoading(true);
+    setError(null);
+    await fetchQuotes();
   };
 
   // Fetch Watchlist
@@ -126,6 +151,10 @@ export function MarketProvider({ children }) {
         isWatchlisted,
         toggleWatchlist,
         priceFlashes,
+        loading,
+        error,
+        isOnline: Boolean(!error && quotes.length > 0),
+        retryFetchQuotes,
         refreshQuotes: fetchQuotes,
         refreshWatchlist: fetchWatchlist
       }}

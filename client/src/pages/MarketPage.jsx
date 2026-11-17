@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, ChevronDown, ArrowUpDown, TrendingUp, TrendingDown } from 'lucide-react';
+import { Star, ChevronDown, ArrowUpDown, TrendingUp, TrendingDown, AlertCircle, RefreshCw } from 'lucide-react';
 import { useMarket } from '../context/MarketContext';
 import CompanyAvatar from '../components/CompanyAvatar';
 import PriceText from '../components/PriceText';
@@ -8,7 +8,19 @@ import Sparkline from '../components/Sparkline';
 import { formatINR, formatPercent, formatNumber } from '../utils/formatters';
 
 export default function MarketPage() {
-  const { quotes, niftyQuote, watchlistSymbols, isWatchlisted, toggleWatchlist } = useMarket();
+  const { 
+    quotes, 
+    niftyQuote, 
+    watchlistSymbols, 
+    isWatchlisted, 
+    toggleWatchlist,
+    loading,
+    error,
+    isOnline,
+    retryFetchQuotes,
+    isSimulated,
+    lastUpdated
+  } = useMarket();
   const navigate = useNavigate();
 
   const [selectedSector, setSelectedSector] = useState('ALL');
@@ -122,7 +134,76 @@ export default function MarketPage() {
   };
 
   return (
-    <div className="space-y-8 page-transition pb-16">
+    <div className="space-y-6 page-transition pb-16">
+      {/* Market Feed Status Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+        <div>
+          <h1 className="text-base sm:text-lg font-semibold text-heading">Markets Overview</h1>
+          <p className="text-2xs text-muted">Real-time Indian National Stock Exchange (NSE) paper trading terminal</p>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* Feed Status Pill */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-bg-card border border-border text-2xs shadow-xs">
+            {isOnline ? (
+              <>
+                <span className={`w-2 h-2 rounded-full ${isSimulated ? 'bg-sky-500 animate-pulse' : 'bg-gain animate-pulse'}`} />
+                <span className="font-medium text-heading">
+                  {isSimulated ? 'Simulated Market Feed' : 'Live NSE Market'}
+                </span>
+                {lastUpdated && (
+                  <span className="text-muted border-l border-border pl-1.5 ml-0.5 tabular-nums">
+                    {new Date(lastUpdated).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                <span className="font-medium text-amber-500">Connecting to Server...</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Backend Connection Warning Card (displayed if backend is unreachable) */}
+      {error && quotes.length === 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-card p-5 text-heading shadow-card space-y-3">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-1">
+              <h3 className="text-sm font-semibold text-heading">
+                Market Data Server Unreachable
+              </h3>
+              <p className="text-xs text-muted leading-relaxed">
+                {error}
+              </p>
+              {!import.meta.env.VITE_API_URL && (
+                <div className="mt-2 p-2.5 bg-bg-card border border-border rounded text-2xs text-muted leading-relaxed">
+                  <span className="font-semibold text-heading">Deployment Notice: </span>
+                  The frontend is deployed, but <code className="text-primary font-mono font-semibold">VITE_API_URL</code> is not configured.
+                  Please deploy the Express backend (e.g. to Render) and set <code className="text-primary font-mono font-semibold">VITE_API_URL</code> in your Vercel Project Settings to your deployed backend URL.
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              onClick={retryFetchQuotes}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-text text-xs font-medium rounded-btn hover:opacity-90 transition-opacity disabled:opacity-50 shadow-xs"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Reconnecting...' : 'Retry Connection'}
+            </button>
+            <span className="text-2xs text-muted">
+              Auto-retrying in background every 5 seconds...
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* 1. Top Row: 3 Index Cards with Sparkline */}
       <section>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -376,8 +457,31 @@ export default function MarketPage() {
               <tbody className="divide-y divide-border">
                 {filteredStocks.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="py-12 text-center text-xs text-muted">
-                      No stocks found in sector "{selectedSector}".
+                    <td colSpan="4" className="py-16 text-center text-xs text-muted">
+                      {loading ? (
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <RefreshCw className="w-5 h-5 animate-spin text-primary" />
+                          <span className="font-medium text-heading">Connecting to market feed...</span>
+                          <span className="text-2xs text-muted">Fetching latest NSE stock prices and indices</span>
+                        </div>
+                      ) : error ? (
+                        <div className="space-y-2 py-4">
+                          <AlertCircle className="w-6 h-6 text-amber-500 mx-auto" />
+                          <div className="font-medium text-heading">Market feed unavailable</div>
+                          <div className="text-2xs text-muted max-w-sm mx-auto">
+                            Unable to retrieve stocks. Ensure your backend server is deployed and online.
+                          </div>
+                          <button
+                            onClick={retryFetchQuotes}
+                            className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-primary text-primary-text text-xs rounded-btn font-medium hover:opacity-90 transition-opacity"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            Retry
+                          </button>
+                        </div>
+                      ) : (
+                        `No stocks found in sector "${selectedSector}".`
+                      )}
                     </td>
                   </tr>
                 ) : (

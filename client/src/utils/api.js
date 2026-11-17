@@ -34,9 +34,15 @@ export function clearToken() {
 }
 
 export async function apiFetch(endpoint, options = {}) {
-  const url = endpoint.startsWith('http')
-    ? endpoint
-    : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  // Normalize endpoint: ensure relative paths begin with /api/
+  let cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  if (!cleanEndpoint.startsWith('/api/') && !cleanEndpoint.startsWith('http')) {
+    cleanEndpoint = `/api${cleanEndpoint}`;
+  }
+
+  const url = cleanEndpoint.startsWith('http')
+    ? cleanEndpoint
+    : `${API_BASE_URL}${cleanEndpoint}`;
 
   const headers = {
     ...options.headers,
@@ -47,9 +53,26 @@ export async function apiFetch(endpoint, options = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  return fetch(url, {
-    ...options,
-    headers,
-    credentials: 'include', // Always send cookies (cross-domain and same-origin)
-  });
+  let res;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers,
+      credentials: 'include', // Always send cookies (cross-domain and same-origin)
+    });
+  } catch (err) {
+    throw new Error(
+      `Unable to connect to market server at ${url}. Please verify the backend is online.`
+    );
+  }
+
+  // Detect HTML responses from Vercel SPA fallbacks when VITE_API_URL is missing or wrong
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('text/html') && cleanEndpoint.startsWith('/api/')) {
+    throw new Error(
+      `Market server unavailable at ${url}. If deployed on Vercel, please set VITE_API_URL in your Vercel Project Settings to your deployed backend URL.`
+    );
+  }
+
+  return res;
 }

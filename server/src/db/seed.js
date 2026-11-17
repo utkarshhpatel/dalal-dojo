@@ -2,9 +2,14 @@ import bcrypt from 'bcryptjs';
 import db, { initDatabase } from './database.js';
 import { POPULAR_STOCKS } from '../config/stocks.js';
 
-async function seed() {
-  console.log('Seeding Dalal Dojo database...');
-  initDatabase();
+export async function seedData(targetDb = db, force = false) {
+  const userCount = targetDb.prepare('SELECT COUNT(*) as c FROM users').get()?.c || 0;
+  if (userCount > 0 && !force) {
+    console.log(`[DB] Existing database found with ${userCount} users. Skipping automatic seed to preserve existing data.`);
+    return false;
+  }
+
+  console.log(`[DB] ${force ? 'Force re-seeding' : 'Initial database setup (0 users)'}: Seeding demo users and leaderboard...`);
 
   const salt = await bcrypt.genSalt(10);
   const demoPassHash = await bcrypt.hash('demo123', salt);
@@ -219,29 +224,30 @@ async function seed() {
     }
   ];
 
-  // Clear existing demo tables
-  const tx = db.transaction(() => {
-    db.prepare('DELETE FROM watchlist').run();
-    db.prepare('DELETE FROM orders').run();
-    db.prepare('DELETE FROM holdings').run();
-    db.prepare('DELETE FROM users').run();
+  const tx = targetDb.transaction(() => {
+    if (force) {
+      targetDb.prepare('DELETE FROM watchlist').run();
+      targetDb.prepare('DELETE FROM orders').run();
+      targetDb.prepare('DELETE FROM holdings').run();
+      targetDb.prepare('DELETE FROM users').run();
+    }
 
     for (const u of usersData) {
-      const userRes = db.prepare(`
+      const userRes = targetDb.prepare(`
         INSERT INTO users (username, password_hash, cash)
         VALUES (?, ?, ?)
       `).run(u.username, u.password_hash, u.cash);
       const userId = userRes.lastInsertRowid;
 
       for (const h of u.holdings) {
-        db.prepare(`
+        targetDb.prepare(`
           INSERT INTO holdings (user_id, symbol, quantity, avg_price)
           VALUES (?, ?, ?, ?)
         `).run(userId, h.symbol, h.quantity, h.avg_price);
       }
 
       for (const o of u.orders) {
-        db.prepare(`
+        targetDb.prepare(`
           INSERT INTO orders (user_id, symbol, side, type, quantity, limit_price, executed_price, status, fees, note, created_at, executed_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
@@ -261,7 +267,7 @@ async function seed() {
       }
 
       for (const w of u.watchlist) {
-        db.prepare(`
+        targetDb.prepare(`
           INSERT INTO watchlist (user_id, symbol)
           VALUES (?, ?)
         `).run(userId, w);
@@ -270,10 +276,17 @@ async function seed() {
   });
 
   tx();
-  console.log('Seeded successfully with 6 users (including demo) and realistic portfolios!');
+  console.log('[DB] Seeded successfully with 6 users (including demo) and realistic portfolios!');
+  return true;
 }
 
-seed().catch(err => {
-  console.error('Seed error:', err);
-  process.exit(1);
-});
+// If executed directly from command line (npm run seed)
+const isMain = process.argv[1] && process.argv[1].endsWith('seed.js');
+if (isMain) {
+  const force = process.argv.includes('--force') || process.env.FORCE_SEED === 'true';
+  initDatabase();
+  seedData(db, force).catch(err => {
+    console.error('Seed error:', err);
+    process.exit(1);
+  });
+}

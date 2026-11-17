@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const defaultDbPath = path.resolve(__dirname, '../../data/dalaldojo.db');
-const dbPath = process.env.DATABASE_PATH || defaultDbPath;
+const dbPath = process.env.DB_PATH || process.env.DATABASE_PATH || defaultDbPath;
 const dbDir = path.dirname(dbPath);
 
 if (!fs.existsSync(dbDir)) {
@@ -74,6 +74,13 @@ export function initDatabase() {
 
   db.exec(schema);
   console.log('Database initialized successfully at:', dbPath);
+
+  // Safe non-destructive initial seeding (only if database has 0 users)
+  import('./seed.js').then(({ seedData }) => {
+    seedData(db, false).catch(err => {
+      console.warn('[DB] Non-blocking safeSeed notice:', err.message);
+    });
+  }).catch(() => {});
 }
 
 export default db;

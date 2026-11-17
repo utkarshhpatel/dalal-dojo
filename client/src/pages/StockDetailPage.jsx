@@ -33,7 +33,7 @@ export default function StockDetailPage() {
   const fetchHolding = async () => {
     if (!user || !symbol) return;
     try {
-      const res = await apiFetch('/portfolio');
+      const res = await apiFetch('/api/portfolio');
       if (res.ok) {
         const data = await res.json();
         const holding = data.holdings.find(h => h.symbol.toUpperCase() === symbol.toUpperCase());

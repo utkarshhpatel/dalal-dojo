@@ -6,6 +6,7 @@ services:
     rootDir: server
     buildCommand: npm install
     startCommand: npm start
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
@@ -14,7 +15,9 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CLIENT_URL
-        sync: false
+        value: https://dalaldojo.vercel.app
+      - key: DB_PATH
+        value: /var/data/dalaldojo.db
       - key: DATABASE_PATH
         value: /var/data/dalaldojo.db
       - key: COOKIE_SAME_SITE

@@ -24,7 +24,7 @@ import { formatINR } from '../utils/formatters';
 
 export default function Navbar() {
   const { user, logout, resetAccount } = useAuth();
-  const { isSimulated, watchlistSymbols } = useMarket();
+  const { isSimulated, isOnline, watchlistSymbols } = useMarket();
   const { theme, toggleTheme, isDark } = useTheme();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -81,9 +81,27 @@ export default function Navbar() {
             <div className="w-8 h-8 rounded-[8px] bg-primary flex items-center justify-center text-primary-text font-bold transition-transform group-hover:scale-105">
               <TrendingUp className="w-4 h-4" strokeWidth={2.5} />
             </div>
-            <span className="text-base font-semibold text-heading tracking-tight">
-              Dalal Dojo
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base font-semibold text-heading tracking-tight">
+                Dalal Dojo
+              </span>
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  !isOnline
+                    ? 'bg-amber-500 animate-pulse'
+                    : isSimulated
+                    ? 'bg-sky-500'
+                    : 'bg-gain'
+                }`}
+                title={
+                  !isOnline
+                    ? 'Connecting to market server...'
+                    : isSimulated
+                    ? 'Simulated Market Feed'
+                    : 'Live NSE Market'
+                }
+              />
+            </div>
           </NavLink>
 
           {/* Center: Wide Search Bar */}

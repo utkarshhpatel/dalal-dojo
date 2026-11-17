@@ -19,7 +19,7 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const res = await apiFetch('/orders');
+      const res = await apiFetch('/api/orders');
       if (res.ok) {
         const data = await res.json();
         setOrders(data.orders);
@@ -38,7 +38,7 @@ export default function OrdersPage() {
   const handleCancelOrder = async (orderId, symbol) => {
     setCancellingId(orderId);
     try {
-      const res = await apiFetch(`/orders/${orderId}`, {
+      const res = await apiFetch(`/api/orders/${orderId}`, {
         method: 'DELETE'
       });
       if (!res.ok) {
